@@ -1,0 +1,110 @@
+# User Constraint File for BlackIce Acorn Atom (Ice40Atom)
+
+set_io clk       129 #
+set_io greset    128 #
+set_io DONE       52 # DONE
+set_io DBG1       49 # DBG1
+set_io PMOD[0]    94 # PMOD0  = PMOD  1, pin 11
+set_io PMOD[1]    91 # PMOD1  = PMOD  1, pin  9
+set_io PMOD[2]    88 # PMOD2  = PMOD  1, pin  7, arm rxd
+set_io PMOD[3]    85 # PMOD3  = PMOD  1, pin  5, arm txd
+set_io PMOD[4]    95 # PMOD4  = PMOD  2, pin 12
+set_io PMOD[5]    93 # PMOD5  = PMOD  2, pin 10
+set_io PMOD[6]    90 # PMOD6  = PMOD  2, pin  8
+set_io PMOD[7]    87 # PMOD7  = PMOD  2, pin  6
+set_io PMOD[8]   105 # PMOD8  = PMOD  3, pin 11
+set_io PMOD[9]   102 # PMOD9  = PMOD  3, pin  9
+set_io PMOD[10]   99 # PMOD10 = PMOD  3, pin  7
+set_io PMOD[11]   97 # PMOD11 = PMOD  3, pin  5, i_tx
+set_io PMOD[11]  104 # PMOD12 = PMOD  4, pin 12
+set_io PMOD[13]  101 # PMOD13 = PMOD  4, pin 10
+set_io PMOD[14]   98 # PMOD14 = PMOD  4, pin  8
+set_io PMOD[15]   96 # PMOD15 = PMOD  4, pin  6, i_rx
+set_io PMOD[16]  143 # PMOD16 = PMOD  5, pin 11
+set_io PMOD[17]  114 # PMOD17 = PMOD  5, pin  9
+set_io PMOD[18]  112 # PMOD18 = PMOD  5, pin  7
+set_io PMOD[19]  107 # PMOD19 = PMOD  5, pin  5
+set_io PMOD[20]  144 # PMOD20 = PMOD  6, pin 12
+set_io PMOD[21]  113 # PMOD21 = PMOD  6, pin 10
+set_io PMOD[22]  110 # PMOD22 = PMOD  6, pin  8
+set_io PMOD[23]  106 # PMOD23 = PMOD  6, pin  6
+set_io PMOD[24]   10 # PMOD24 = PMOD  7, pin 11, LVDS  5b
+set_io PMOD[25]    9 # PMOD25 = PMOD  7, pin  9, LVDS  5a
+set_io PMOD[26]    2 # PMOD26 = PMOD  7, pin  7, LVDS  2b
+set_io PMOD[27]    1 # PMOD27 = PMOD  7, pin  5, LVDS  2a
+set_io PMOD[28]    8 # PMOD28 = PMOD  8, pin 12, LVDS  4b
+set_io PMOD[29]    7 # PMOD29 = PMOD  8, pin 10, LVDS  4a
+set_io PMOD[30]    4 # PMOD30 = PMOD  8, pin  8, LVDS  3b
+set_io PMOD[31]    3 # PMOD31 = PMOD  8, pin  6, LVDS  3a
+set_io PMOD[32]   20 # PMOD32 = PMOD  9, pin 11, LVDS 13b
+set_io PMOD[33]   19 # PMOD33 = PMOD  9, pin  9, LVDS 13a
+set_io PMOD[34]   16 # PMOD34 = PMOD  9, pin  7, LVDS 10b
+set_io PMOD[35]   15 # PMOD35 = PMOD  9, pin  5, LVDS 10a
+set_io PMOD[36]   18 # PMOD36 = PMOD 10, pin 12, LVDS 12b
+set_io PMOD[37]   17 # PMOD37 = PMOD 10, pin 10, LVDS 12a
+set_io PMOD[38]   12 # PMOD38 = PMOD 10, pin  8, LVDS  8b
+set_io PMOD[39]   11 # PMOD39 = PMOD 10, pin  6, LVDS  8a
+set_io PMOD[40]   34 # PMOD40 = PMOD 11, pin 11, LVDS 25b
+set_io PMOD[41]   33 # PMOD41 = PMOD 11, pin  9, LVDS 25a
+set_io PMOD[42]   22 # PMOD42 = PMOD 11, pin  7, LVDS 14b
+set_io PMOD[43]   21 # PMOD43 = PMOD 11, pin  5, LVDS 14a
+set_io PMOD[44]   32 # PMOD44 = PMOD 12, pin 12, LVDS 24b
+set_io PMOD[45]   31 # PMOD45 = PMOD 12, pin 10, LVDS 24a
+set_io PMOD[46]   26 # PMOD46 = PMOD 12, pin  8, LVDS 18b
+set_io PMOD[47]   25 # PMOD47 = PMOD 12, pin  6, LVDS 18a
+set_io PMOD[48]   37 # PMOD48 = PMOD 13, pin  4, DIG19, S1, SW1.2, SD SCLK
+set_io PMOD[49]   38 # PMOD49 = PMOD 13, pin  3, DIG18, S1, SW1.1, SD SS
+set_io PMOD[50]   39 # PMOD50 = PMOD 13, pin  2, DIG17, S2, SW2.2, SD X
+set_io PMOD[51]   41 # PMOD51 = PMOD 13, pin  1, DIG16, S2, SW2.1, SD MOSI
+set_io B1         63 #                                  S3, B1,    SD MISO
+set_io B2         64 #                                  S4, B2,    SD X
+set_io PMOD[52]   71 # PMOD52 = PMOD 14, pin  4, LED4, ARM !SS
+set_io PMOD[53]   67 # PMOD53 = PMOD 14, pin  3, LED3, ARM MISO
+set_io PMOD[54]   68 # PMOD54 = PMOD 14, pin  2, LED2, ARM MOSI
+set_io PMOD[55]   70 # PMOD55 = PMOD 14, pin  1, LED1, ARM SCLK
+set_io QSPICSN    81 #
+set_io QSPICK     82 #
+set_io QSPIDQ[0]  83 #
+set_io QSPIDQ[1]  84 #
+set_io QSPIDQ[2]  79 #
+set_io QSPIDQ[3]  80 #
+set_io RAMOE      29 #
+set_io RAMWE     120 #
+set_io RAMCS      23 #
+set_io RAMUB      28 #
+set_io RAMLB      24 #
+set_io ADR[0]    137 #
+set_io ADR[1]    138 #
+set_io ADR[2]    139 #
+set_io ADR[3]    141 #
+set_io ADR[4]    142 #
+set_io ADR[5]     42 #
+set_io ADR[6]     43 #
+set_io ADR[7]     44 #
+set_io ADR[8]     73 #
+set_io ADR[9]     74 #
+set_io ADR[10]    75 #
+set_io ADR[11]    76 #
+set_io ADR[12]   115 #
+set_io ADR[13]   116 #
+set_io ADR[14]   117 #
+set_io ADR[15]   118 #
+set_io ADR[16]   119 #
+set_io ADR[17]    78 #
+set_io DAT[0]    136 #
+set_io DAT[1]    135 #
+set_io DAT[2]    134 #
+set_io DAT[3]    130 #
+set_io DAT[4]    125 #
+set_io DAT[5]    124 #
+set_io DAT[6]    122 #
+set_io DAT[7]    121 #
+set_io DAT[8]     62 #
+set_io DAT[9]     61 #
+set_io DAT[10]    60 #
+set_io DAT[11]    56 #
+set_io DAT[12]    55 #
+set_io DAT[13]    48 #
+set_io DAT[14]    47 #
+set_io DAT[15]    45 #
+set_io GENBTC[1] 138 # tester for duplicates
