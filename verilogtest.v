@@ -16,5 +16,5 @@ module soc_top (
    input  B2,
    input  QSPICSN,
    input  QSPICK,
-   output [3:0] QSPIDQ
+   output [3:0] QSPIDQ #are comments possible?
 );
