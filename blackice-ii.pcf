@@ -107,4 +107,3 @@ set_io DAT[12]    55 #
 set_io DAT[13]    48 #
 set_io DAT[14]    47 #
 set_io DAT[15]    45 #
-set_io GENBTC[1] 138 # tester for duplicates
