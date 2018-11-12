@@ -1,3 +1,5 @@
+/* (C) 2018 - genBTC, all rights reserved */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -50,11 +52,35 @@ std::vector<PCFlayout> parsePCF(const char* pcffile) {
     return v;
 }
 
-//bool hasDuplicatePinErrorsSet(std::vector<PCFlayout> &v1);
-bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1);
+bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1) {
+    bool hasdupes{ false };
+    std::unordered_map<int, PCFlayout> u_map;
+    int dupes_found = 0;
+
+    for (size_t i = 0; i < v1.size(); ++i)
+    {
+        PCFlayout vi = v1.at(i);
+        if (vi.pinNum == "") continue;
+        int pi = std::stoi(vi.pinNum);
+        //Check map for duplicate
+        if (u_map.find(pi) != u_map.end()) {
+            hasdupes = true; ++dupes_found;
+            std::cout << "Duplicate Pin: " << vi.pinNum << " = " << vi.pinName << " <-- Re-definition error.\n>Original Pin: "
+              << u_map[pi].pinNum << " = " << u_map[pi].pinName << "\n";
+            continue;
+        }
+        u_map[pi] = vi;
+        //std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
+    }
+    //if (hasdupes || dupes_found)
+    std::cout << "\n" << dupes_found << " Duplicates Found\n";
+    return hasdupes;
+}
 
 int main(int argc, char** argv) {
-   
+    if (argc > 1) {
+        pcffile = argv[1];
+    }
     std::cout << "Reading Input File: " << pcffile << "\n";
     std::vector<PCFlayout> pcfnodes = parsePCF(pcffile);
 
@@ -67,54 +93,5 @@ int main(int argc, char** argv) {
     std::cout << "Checking for duplicate pins...\n";
     auto result = hasDuplicatePinErrorsMap(pcfnodes);
     std::cout << (result ? "Errors!" : "OK") << "\n";
-
-}
-
-/*
-bool hasDuplicatePinErrorsSet(std::vector<PCFlayout> &v1) {
-    bool hasdupes{ false };
-    std::unordered_set<int> u_set;
-    int dupes_found = 0;
-
-    for (size_t i = 0; i < v1.size(); ++i)
-    {
-        PCFlayout vi = v1.at(i);
-        if (vi.pinNum == "") continue;
-        int pi = std::stoi(vi.pinNum);
-        if (u_set.find(pi) != u_set.end()) {
-            hasdupes = true; ++dupes_found;
-            std::cout << "Found a duplicate pin: " << vi.pinNum << " = " << vi.pinName << " ALREADY DEFINED BY PIN " << pi << "\n";
-            continue;
-        }
-        u_set.insert(pi);
-        std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
-    }
-    //if (hasdupes || dupes_found)
-        std::cout << "\n" << dupes_found << " Duplicates Found\n";
-    return hasdupes;
-}
-*/
-
-bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1) {
-    bool hasdupes{ false };
-    std::unordered_map<int, PCFlayout> u_map;
-    int dupes_found = 0;
-
-    for (size_t i = 0; i < v1.size(); ++i)
-    {
-        PCFlayout vi = v1.at(i);
-        if (vi.pinNum == "") continue;
-        int pi = std::stoi(vi.pinNum);
-        if (u_map.find(pi) != u_map.end()) {
-            hasdupes = true; ++dupes_found;
-            std::cout << "Found a duplicate pin: " << vi.pinNum << " = " << vi.pinName << " ALREADY DEFINED BY PIN " 
-                                            << u_map[pi].pinNum << " = " << u_map[pi].pinName << "\n";
-            continue;
-        }
-        u_map[pi] = vi;
-        std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
-    }
-    //if (hasdupes || dupes_found)
-    std::cout << "\n" << dupes_found << " Duplicates Found\n";
-    return hasdupes;
+    return result;
 }
