@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #define TEST_PRINT_RESULTS_CHECK 0
+int VERBOSE_V_MODE = 0;
 //default filenames
 const char* verilogfile = "verilogtest.v";
 const char* pcffile = "blackice-ii.pcf";
@@ -23,15 +24,15 @@ struct PCFlayout {
 };
 
 std::vector<PCFlayout> parsePCF(const char* pcffile) {
-    std::ifstream input(pcffile);
-    std::vector<PCFlayout> v;           // a vector of PCFlayouts
-    std::string line;
+    std::vector<PCFlayout> v;
+    std::ifstream input(pcffile);              // open the file    
+    std::string line;                          // iterate each line
     while (std::getline(input, line)) {        // getline returns the stream by reference, so this handles EOF
-        std::stringstream ss(line);            // create a stringstream out of line
-        PCFlayout PCF_node;
+        std::stringstream ss(line);            // create a stringstream out of each line
+        PCFlayout PCF_node;                    // start a new node
         while (ss) {                           // while the stream is good
-            std::string word;
-            if (ss >> word) {                  // if there's still data to get
+            std::string word;                  // get first word
+            if (ss >> word) {                  // if first word is set_io
                 if (word.find("set_io") == 0) {
                     PCF_node.setio = word;  //not needed to store, but why not.
                     ss >> PCF_node.pinName >> PCF_node.pinNum;
@@ -72,17 +73,42 @@ bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1) {
         }
         u_map[pi] = vi;
         //TODO -v verbose mode
-        //std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
+        if (VERBOSE_V_MODE)
+            std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
     }
     if (hasdupes || dupes_found)
         std::cout << "\n" << dupes_found << " Duplicates Found\n";
     return hasdupes;
 }
 
+bool cmdOptionExists(char** begin, char** end, const std::string& option)
+{
+    return std::find(begin, end, option) != end;
+}
+
+char* getCmdOption(char ** begin, char ** end, const std::string & option)
+{
+    char **itr = std::find(begin, end, option);
+    if (itr != end && ++itr != end)
+        return *itr;
+    return 0;
+}
+
 int main(int argc, char** argv) {
-    //can provide filename as command line parameter so: PCFParser.exe blackice-iii.pcf
-    if (argc > 1)
-        pcffile = argv[1];
+    //can provide filename as command line parameter so: PCFParser.exe -f blackice-iii.pcf
+    //command line interpreter
+    if (argc > 1) {
+        if (cmdOptionExists(argv, argv + argc, "-f"))
+            pcffile = getCmdOption(argv, argv + argc, "-f");
+        VERBOSE_V_MODE = cmdOptionExists(argv, argv + argc, "-v");
+        if (cmdOptionExists(argv, argv + argc, "-h")) {
+            std::cout << "Help file:\n";
+            std::cout << "usage: " << argv[0] << "-f filename.pcf [opens PCF FILE for input]\n";
+            std::cout << "usage: " << argv[0] << "-v [VERBOSE mode prints valid pin checks also]\n";
+            std::cout << "usage: " << argv[0] << "-h [HELP] (lists command line options)\n";
+            return 0;
+        }
+    }
 
     std::cout << "Reading Input File: " << pcffile << "\n";
     std::vector<PCFlayout> pcfnodes = parsePCF(pcffile);
