@@ -60,6 +60,7 @@ std::vector<PCFlayout> parsePCF(const char* pcffile) {
 struct Veriloglayout {
     std::string inpout;
     std::string bitfield;
+    int bits=1;
     std::string pinName;
     std::string comment;
 };
@@ -79,10 +80,15 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
                     if (ss >> word) {
                         if (word.find('[') == 0) {
                             VLog_node.bitfield = word;
+                            VLog_node.bits = std::stoi(word.substr(1, word.find(':')));
                             ss >> VLog_node.pinName;
                         }
                         else
                             VLog_node.pinName = word;
+                        //remove the ending comma
+                        auto l = VLog_node.pinName.size() - 1;
+                        if (l == VLog_node.pinName.find(','))
+                            VLog_node.pinName.erase(l);
                     }
                 }
                 else if (word[0] == '#') { // if it's a comment
@@ -92,6 +98,14 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
                         VLog_node.comment = line.substr(commentpos);
                     break;  //or ignore the full line comment and move on
                 }
+                else if (word.find("verilog") == 0)  //marks the start of the file
+                    break;
+                else if (word.find("module") == 0) { //marks the start of the module definition
+                    ss >> word;
+                    break;
+                }
+                else if (word.find(");") == 0)  //marks the end of the file
+                    break;
                 else {
                     std::cerr << "Unexpected symbol: '" << word << "'\n"; // report unexpected data
                     break; //and move onto next line. without this, it will accept more following values on this line
@@ -181,8 +195,12 @@ int main(int argc, char** argv) {
     if (TEST_PRINT_VERILOG_CHECK) {
         std::cout << "Printing parsed Verilog:\n";
         for (auto node : vlognodes) {
-            if (node.pinName.length() != 0)
-                std::cout << node.inpout << ": " << node.pinName << " Bits:" << node.bitfield << " #" << node.comment << std::endl;
+            if (node.pinName.length() != 0) {
+                std::cout << node.inpout << ": " << node.pinName;
+                if (node.bits > 1)
+                    std::cout << " Bits: " << node.bits;
+                std::cout << "  " << node.comment << std::endl;
+            }
         }
         std::cout << "\n";
     }
