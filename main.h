@@ -3,7 +3,8 @@ struct Veriloglayout {
     std::string inpout;
     std::string bitfield;
     int bits = 1;
-    int seenBits = 0;
+    int hibit = 0;
+    int lobit = 0;
     std::string pinName;
     std::string comment;
 };
@@ -11,6 +12,7 @@ struct Veriloglayout {
 struct PCFlayout {
     std::string setio;
     std::string pinName;
+    int pinNameBit;
     std::string pinNum;
     int pinNumInt;
     std::string comment;

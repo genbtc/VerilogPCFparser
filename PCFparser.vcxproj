@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="blackice-ii.pcf" />
+    <None Include="blackice-iii.pcf" />
     <None Include="verilogALL.v" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,9 @@
 /* (C) 2018 - genBTC, All Rights Reserved */
 /* November 12, 2018 */
-/* for drox's FPGA project. */
+/* "PCFParser by genBTC" - for drox's FPGA project. */
 /* Reads some .PCF files and some .V verilog files and parses them */
+/* Checks PCF file for duplicate pins */
+/* Matches PCF file pins to Verilog module pin names, detect mismatches */
    /*
 */ /* PCF File lines are in the form of:
         set_io DBG1       49 # DBG1
@@ -16,9 +18,6 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <unordered_set>
-#include <unordered_map>
-#include <set>
 #include <map>
 #include "main.h"
 
@@ -84,9 +83,9 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
                     if (ss >> word) {
                         if (word.find('[') == 0) {
                             VLog_node.bitfield = word;
-                            int hibits = std::stoi(word.substr(1, word.find(':')));
-                            int lobits = std::stoi(word.substr(word.find(':')+1,word.size()));
-                            VLog_node.bits = hibits - lobits + 1;
+                            VLog_node.hibit = std::stoi(word.substr(1, word.find(':')));
+                            VLog_node.lobit = std::stoi(word.substr(word.find(':')+1,word.size()));
+                            VLog_node.bits = VLog_node.hibit - VLog_node.lobit + 1;
                             ss >> VLog_node.pinName;
                         }
                         else
@@ -131,8 +130,7 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
 bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayout> &i_map) {
     bool hasdupes{ false }; int dupes_found = 0;
 
-    for (size_t i = 0; i < v1.size(); ++i) {
-        PCFlayout vi = v1.at(i);
+    for (auto vi : v1) { 
         if (vi.pinNum == "") continue;
         int pi = vi.pinNumInt;
         //Check map for duplicate
@@ -143,7 +141,6 @@ bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayou
             continue;
         }
         i_map[pi] = vi;
-        //TODO -v verbose mode
         if (VERBOSE_V_MODE)
             std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
     }
@@ -152,60 +149,65 @@ bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayou
     return hasdupes;
 }
 
-bool cmdOptionExists(char** begin, char** end, const std::string& option)
-{
-    return std::find(begin, end, option) != end;
-}
 
-char* getCmdOption(char** begin, char** end, const std::string& option)
-{
-    char** itr = std::find(begin, end, option);
-    if (itr != end && ++itr != end)
-        return *itr;
-    return 0;
-}
 
-bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::map<int, PCFlayout> &i_map,
-                        std::vector<Veriloglayout> &v2) {
-
+bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> &v2, 
+                         std::map<std::string, int> &pinBitNums) {
     //count up the number of pcf pins named the same thing
-    std::unordered_map<std::string, int> pinBitNum;
     for (auto node : v1) {
         if (node.pinName == "") continue;
         //strip out the [ ] 
         auto l = node.pinName.find('[');
-        if (l != std::string::npos)
+        if (l != std::string::npos) {
+            int pinbit = std::stoi(node.pinName.substr(l+1, node.pinName.find(']') - 1));
+            //std::cout << "pinbit " << pinbit << std::endl;
+            node.pinNameBit = pinbit;
             node.pinName.erase(l);
+        }
         //make a map of the verilog to find by name and get the bits
-        pinBitNum[node.pinName]++;  //increment seen pin bit count
+        pinBitNums[node.pinName]++;  //increment seen pin bit count
     }
     //check output:
     //pinBitNum will be PINNAME , TOTALBITSACCOUNTEDFOR
     if (TEST_PCF_PIN_COUNT) {
-        for (auto pin : pinBitNum) {
+        for (auto pin : pinBitNums) {
             std::cout << pin.first << " " << pin.second << "\n";
         }
     }
     std::cout << "\nComparing parsed_PCF with parsed_Verilog:\n";
-    for (auto pin : pinBitNum) {
+    bool hasMismatches{ false }; int mismatches_found = 0;
+    //O(n^2)? = meh
+    for (auto pin : pinBitNums) {
         for (auto vnode : v2) {
             if (vnode.pinName == "") continue;
             if (pin.first.find(vnode.pinName) == 0) {
                 if (pin.second != vnode.bits) {
                     std::cout << "Verilog bit-count " << vnode.pinName << " " << vnode.bits << "\n";
                     std::cout << " NOT EQUAL to: \n";
-                    std::cout << "PCF bit-count " << pin.first << " " << pin.second << "\n";
+                    std::cout << "PCFfile bit-count " << pin.first << " " << pin.second << "\n";
+                    hasMismatches = true;  mismatches_found++;
                     break;
                 }
             }
         }
     }
-    return false;
+    if (hasMismatches || mismatches_found)
+        std::cout << "\n" << mismatches_found << " Mis-Matches Found\n";
+    return hasMismatches;
 }
 
+bool cmdOptionExists(char** begin, char** end, const std::string& option) {
+    return std::find(begin, end, option) != end;
+}
 
-int main(int argc, char** argv) {
-    //can provide filename as command line parameter so: PCFParser.exe -f blackice-iii.pcf -v
+char* getCmdOption(char** begin, char** end, const std::string& option) {
+    char** itr = std::find(begin, end, option);
+    if (itr != end && ++itr != end)
+        return *itr;
+    return 0;
+}
+
+bool commandLineOptionsHandler(int argc, char** argv) {
     //command line interpreter
     if (argc > 1) {
         if (cmdOptionExists(argv, argv + argc, "-f"))
@@ -213,12 +215,19 @@ int main(int argc, char** argv) {
         VERBOSE_V_MODE = cmdOptionExists(argv, argv + argc, "-v");
         if (cmdOptionExists(argv, argv + argc, "-h")) {
             std::cout << "Help file:\n";
-            std::cout << "usage: " << argv[0] << "-f filename.pcf [opens PCF FILE for input]\n";
-            std::cout << "usage: " << argv[0] << "-v [VERBOSE mode prints valid pin checks also]\n";
-            std::cout << "usage: " << argv[0] << "-h [HELP] (lists command line options)\n";
-            return 0;
+            std::cout << "usage: " << argv[0] << " -f filename.pcf [opens PCF FILE for input]\n";
+            std::cout << "usage: " << argv[0] << " -v [VERBOSE] (prints valid pin checks, etc)\n";
+            std::cout << "usage: " << argv[0] << " -h [HELP] (this. lists command line usage options)\n";
+            return true;
         }
     }
+    return false;
+}
+
+int main(int argc, char** argv) {
+    //can provide filename as command line parameter so: PCFParser.exe -f blackice-iii.pcf -v
+    if (auto cmdh = commandLineOptionsHandler(argc, argv))
+        return cmdh;
 
     std::cout << "Reading Input PCF File: " << pcffile << "\n";
     std::vector<PCFlayout> pcfnodes = parsePCF(pcffile);
@@ -230,7 +239,7 @@ int main(int argc, char** argv) {
 
     //visually prints PCF input data we just read into the vector - to check validity, as a Unit Test
     if (TEST_PRINT_PCFREAD_CHECK) {
-        std::cout << "Printing Parsed PCF Results:\n";
+        std::cout << "Printing Parsed PCF:\n";
         for (auto node : pcfnodes) {
             if (node.pinName.length() != 0)
                 std::cout << node.setio << " " << node.pinName << " " << node.pinNum << " " << node.comment << std::endl;
@@ -238,10 +247,10 @@ int main(int argc, char** argv) {
         std::cout << "\n";
     }
 
-    std::map<int, PCFlayout> i_map;
     std::cout << "Checking for duplicate pins...\n";
-    auto result = hasDuplicatePinErrorsMap(pcfnodes, i_map);
-    std::cout << (result ? "Errors!" : "All OK!") << "\n\n";
+    std::map<int, PCFlayout> i_map;
+    auto result1 = hasDuplicatePinErrorsMap(pcfnodes, i_map);
+    std::cout << (result1 ? "Errors!" : "All OK!") << "\n\n";
 
     std::cout << "Reading Input Verilog File: " << verilogfile << "\n";
     std::vector<Veriloglayout> vlognodes = parseVerilog(verilogfile);
@@ -253,7 +262,7 @@ int main(int argc, char** argv) {
             if (node.pinName.length() != 0) {
                 std::cout << node.inpout << ": " << node.pinName;
                 if (node.bits > 1)
-                    std::cout << " Bits: " << node.bits;
+                    std::cout << "  bit-count: " << node.bits;
                 std::cout << "  " << node.comment << std::endl;
             }
         }
@@ -261,8 +270,9 @@ int main(int argc, char** argv) {
     }
     
     //Start comparing verilog and PCF files together 
-    auto valid = comparePCFtoVerilog(pcfnodes, i_map, vlognodes);
+    std::map<std::string, int> pinBitNums;
+    auto result2 = comparePCFtoVerilog(pcfnodes, vlognodes, pinBitNums);
 
-    return result;
+    return (result1 || result2);
 }
 
