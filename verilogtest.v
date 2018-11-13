@@ -11,7 +11,7 @@ module soc_top (
    output RAMCS,
    output RAMLB,
    output RAMUB,
-   inout  [55:25] PMOD,
+   inout  [55:5] PMOD,
    input  B1,
    input  B2,
    input  QSPICSN,

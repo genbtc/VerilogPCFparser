@@ -1,6 +1,6 @@
 Reading Input PCF File: blackice-ii.pcf
 Re-Sorting vector of PCF nodes by their arbitrary pin number, ascending
-Printing Parsed PCF Results:
+Printing Parsed PCF:
 set_io PMOD[27] 1 # PMOD27 = PMOD  7, pin  5, LVDS  2a
 set_io PMOD[26] 2 # PMOD26 = PMOD  7, pin  7, LVDS  2b
 set_io PMOD[31] 3 # PMOD31 = PMOD  8, pin  6, LVDS  3a
@@ -118,41 +118,51 @@ input: clk
 input: greset
 input: DONE
 input: DBG1
-output: ADR Bits: 18
-inout: DAT Bits: 16
+output: ADR  bit-count: 18
+inout: DAT  bit-count: 16
 output: RAMOE
 output: RAMWE
 output: RAMCS
 output: RAMLB
 output: RAMUB
-inout: PMOD Bits: 31
+inout: PMOD  bit-count: 51
 input: B1
 input: B2
 input: QSPICSN
 input: QSPICK
-output: QSPIDQ Bits: 4
+output: QSPIDQ  bit-count: 4
 
-RAMLB 1
-PMOD 56
-DONE 1
-RAMCS 1
-RAMUB 1
-RAMOE 1
-DAT 16
 ADR 18
-DBG1 1
 B1 1
 B2 1
-QSPIDQ 4
-QSPICSN 1
+DAT 16
+DBG1 1
+DONE 1
+PMOD 56
 QSPICK 1
+QSPICSN 1
+QSPIDQ 4
+RAMCS 1
+RAMLB 1
+RAMOE 1
+RAMUB 1
 RAMWE 1
-greset 1
 clk 1
+greset 1
 
 Comparing parsed_PCF with parsed_Verilog:
-Verilog bit-count PMOD 31
+Verilog bit-count PMOD 51
  NOT EQUAL to:
-PCF bit-count PMOD 56
+PCFfile bit-count PMOD 56
 
-PCFParser.exe (process 34076) exited with code 0.
+1 Mis-Matches Found!
+
+Comparing parsed_PCF pin name bit number with parsed_Verilog bit field:
+Finds errors where pin bit name is less than or greater than than the Verilog.v bit-field
+Error: PMOD @ .PCF = 3 < .V = 5
+Error: PMOD @ .PCF = 2 < .V = 5
+Error: PMOD @ .PCF = 1 < .V = 5
+Error: PMOD @ .PCF = 0 < .V = 5
+Error: PMOD @ .PCF = 4 < .V = 5
+
+C:\Users\EOFL\Source\Repos\VerilogPCFparser\Debug\PCFParser.exe (process 33468) exited with code 1.

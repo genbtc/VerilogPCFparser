@@ -127,20 +127,20 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
     return v;
 }
 
-bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayout> &i_map) {
+bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayout> &pcfMap) {
     bool hasdupes{ false }; int dupes_found = 0;
 
     for (auto vi : v1) { 
         if (vi.pinNum == "") continue;
         int pi = vi.pinNumInt;
         //Check map for duplicate
-        if (i_map.find(pi) != i_map.end()) {
+        if (pcfMap.find(pi) != pcfMap.end()) {
             hasdupes = true; ++dupes_found;
             std::cout << "Duplicate Pin: " << vi.pinNum << " = " << vi.pinName << " <-- Re-definition error.\n>Original Pin: "
-              << i_map[pi].pinNum << " = " << i_map[pi].pinName << "\n";
+              << pcfMap[pi].pinNum << " = " << pcfMap[pi].pinName << "\n";
             continue;
         }
-        i_map[pi] = vi;
+        pcfMap[pi] = vi;
         if (VERBOSE_V_MODE)
             std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
     }
@@ -152,37 +152,37 @@ bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayou
 
 
 bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> &v2, 
-                         std::map<std::string, int> &pinBitNums) {
+                         std::map<std::string, int> &pinBitNumsMap) {
     //count up the number of pcf pins named the same thing
-    for (auto node : v1) {
-        if (node.pinName == "") continue;
+    for (auto &pNode : v1) {
+        if (pNode.pinName == "") continue;
         //strip out the [ ] 
-        auto l = node.pinName.find('[');
+        auto l = pNode.pinName.find('[');
         if (l != std::string::npos) {
-            int pinbit = std::stoi(node.pinName.substr(l+1, node.pinName.find(']') - 1));
+            int pinbit = std::stoi(pNode.pinName.substr(l+1, pNode.pinName.find(']') - 1));
             //std::cout << "pinbit " << pinbit << std::endl;
-            node.pinNameBit = pinbit;
-            node.pinName.erase(l);
+            pNode.pinNameBit = pinbit;
+            pNode.pinName.erase(l);
         }
         //make a map of the verilog to find by name and get the bits
-        pinBitNums[node.pinName]++;  //increment seen pin bit count
+        pinBitNumsMap[pNode.pinName]++;  //increment seen pin bit count
     }
     //check output:
     //pinBitNum will be PINNAME , TOTALBITSACCOUNTEDFOR
     if (TEST_PCF_PIN_COUNT) {
-        for (auto pin : pinBitNums) {
+        for (auto pin : pinBitNumsMap) {
             std::cout << pin.first << " " << pin.second << "\n";
         }
     }
     std::cout << "\nComparing parsed_PCF with parsed_Verilog:\n";
     bool hasMismatches{ false }; int mismatches_found = 0;
     //O(n^2)? = meh
-    for (auto pin : pinBitNums) {
-        for (auto vnode : v2) {
-            if (vnode.pinName == "") continue;
-            if (pin.first.find(vnode.pinName) == 0) {
-                if (pin.second != vnode.bits) {
-                    std::cout << "Verilog bit-count " << vnode.pinName << " " << vnode.bits << "\n";
+    for (auto pin : pinBitNumsMap) {
+        for (auto vNode : v2) {
+            if (vNode.pinName == "") continue;
+            if (pin.first.find(vNode.pinName) == 0) {
+                if (pin.second != vNode.bits) {
+                    std::cout << "Verilog bit-count " << vNode.pinName << " " << vNode.bits << "\n";
                     std::cout << " NOT EQUAL to: \n";
                     std::cout << "PCFfile bit-count " << pin.first << " " << pin.second << "\n";
                     hasMismatches = true;  mismatches_found++;
@@ -192,7 +192,26 @@ bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> 
         }
     }
     if (hasMismatches || mismatches_found)
-        std::cout << "\n" << mismatches_found << " Mis-Matches Found\n";
+        std::cout << "\n" << mismatches_found << " Mis-Matches Found!\n";
+
+    std::cout << "\nComparing parsed_PCF pin name bit number with parsed_Verilog bit field:\n";
+    std::cout << "Finds errors where pin bit name is less than or greater than than the Verilog.v bit-field\n";
+    //Finds Bit-Range errors between .PCF and .V
+    for (auto pNode : v1) {
+        if (pNode.pinName == "") continue;
+        for (auto vNode : v2) {
+            if (vNode.pinName == "") continue;
+            if (pNode.pinName.find(vNode.pinName) == 0) {
+                if (pNode.pinNameBit < vNode.lobit) {
+                    std::cout << "Error: "<< pNode.pinName << " @ .PCF = " << pNode.pinNameBit << " < .V = " << vNode.lobit << "\n";
+                } 
+                else if (pNode.pinNameBit > vNode.hibit) {
+                    std::cout << "Error: " << pNode.pinName << " @ .PCF = " << pNode.pinNameBit << " > .V = " << vNode.lobit << "\n";
+                }
+            }
+        }
+    }
+
     return hasMismatches;
 }
 
@@ -248,8 +267,8 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Checking for duplicate pins...\n";
-    std::map<int, PCFlayout> i_map;
-    auto result1 = hasDuplicatePinErrorsMap(pcfnodes, i_map);
+    std::map<int, PCFlayout> pcfMap;
+    auto result1 = hasDuplicatePinErrorsMap(pcfnodes, pcfMap);
     std::cout << (result1 ? "Errors!" : "All OK!") << "\n\n";
 
     std::cout << "Reading Input Verilog File: " << verilogfile << "\n";
@@ -270,8 +289,8 @@ int main(int argc, char** argv) {
     }
     
     //Start comparing verilog and PCF files together 
-    std::map<std::string, int> pinBitNums;
-    auto result2 = comparePCFtoVerilog(pcfnodes, vlognodes, pinBitNums);
+    std::map<std::string, int> pinBitNumsMap;
+    auto result2 = comparePCFtoVerilog(pcfnodes, vlognodes, pinBitNumsMap);
 
     return (result1 || result2);
 }
