@@ -10,6 +10,7 @@
 #include <map>
 #include "main.h"
 
+#define TEST_PRINT_PCFREAD_CHECK 0
 
 std::vector<PCFlayout> parsePCF(const char* pcffile) {
     std::vector<PCFlayout> v;
@@ -23,8 +24,15 @@ std::vector<PCFlayout> parsePCF(const char* pcffile) {
             if (ss >> word) {                  // if first word is set_io
                 if (word.find("set_io") == 0) {
                     ss >> PCF_node.pinName >> PCF_node.pinNum;
-                    int pi = std::stoi(PCF_node.pinNum);
-                    PCF_node.pinNumInt = pi;
+                    if (PCF_node.pinNum != "")
+                        PCF_node.pinNumInt = std::stoi(PCF_node.pinNum);
+                    //strip out the [ ] 
+                    auto loc = PCF_node.pinName.find('[');
+                    if (loc != std::string::npos) {
+                        PCF_node.pinNameBit = std::stoi(PCF_node.pinName.substr(loc + 1, PCF_node.pinName.find(']') - 1));
+                        PCF_node.pinNameBase = PCF_node.pinName;  //copy the full string, then
+                        PCF_node.pinNameBase.erase(loc);      //remove the [bitfield] part
+                    }
                     //no break statement, means keep checking (next iteration, for comments)
                 }
                 else if (word[0] == '#') { // if it's a comment
@@ -40,9 +48,24 @@ std::vector<PCFlayout> parsePCF(const char* pcffile) {
                 }
             }
         }
+        if (PCF_node.pinName == "") continue;
         v.push_back(PCF_node);
     }
     return v;
+}
+
+
+void printParsedPCFcheck(std::vector<PCFlayout> &pcfnodes)
+{
+    //visually prints PCF input data we just read into the vector - to check validity, as a Unit Test
+    if (TEST_PRINT_PCFREAD_CHECK) {
+        std::cout << "Printing Parsed PCF:\n";
+        for (auto node : pcfnodes) {
+            if (node.pinName.length() != 0)
+                std::cout << "set_io" << " " << node.pinName << " " << node.pinNum << " " << node.comment << std::endl;
+        }
+        std::cout << "\n";
+    }
 }
 
 
@@ -50,16 +73,14 @@ bool hasDuplicatePinErrorsMap(std::vector<PCFlayout> &v1, std::map<int, PCFlayou
     bool hasdupes{ false }; int dupes_found = 0;
 
     for (auto vi : v1) {
-        if (vi.pinNum == "") continue;
-        int pi = vi.pinNumInt;
         //Check map for duplicate
-        if (pcfMap.find(pi) != pcfMap.end()) {
+        if (pcfMap.find(vi.pinNumInt) != pcfMap.end()) {
             hasdupes = true; ++dupes_found;
             std::cout << "Duplicate Pin: " << vi.pinNum << " = " << vi.pinName << " <-- Re-definition error.\n";
-            std::cout << ">Original Pin: " << pcfMap[pi].pinNum << " = " << pcfMap[pi].pinName << "\n";
+            std::cout << ">Original Pin: " << pcfMap[vi.pinNumInt].pinNum << " = " << pcfMap[vi.pinNumInt].pinName << "\n";
             continue;
         }
-        pcfMap[pi] = vi;
+        pcfMap[vi.pinNumInt] = vi;
         if (VERBOSE_V_MODE)
             std::cout << "Checking: " << vi.pinNum << " = " << vi.pinName << "\n";
     }

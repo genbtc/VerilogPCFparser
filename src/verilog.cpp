@@ -10,6 +10,7 @@
 #include <map>
 #include "main.h"
 
+#define TEST_PRINT_VERILOG_CHECK 0
 #define TEST_PCFMAP_PIN_COUNT 0
 
 std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
@@ -66,47 +67,57 @@ std::vector<Veriloglayout> parseVerilog(const char* verilogfile) {
                 }
             }
         }
+        if (VLog_node.pinName == "") continue;
         v.push_back(VLog_node);
     }
     return v;
 }
 
 
-bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> &v2,
-                         std::map<std::string, int> &pinBitNumsMap) {
-    std::cout << "\nCount up the number of PCF pins with the same name (extract and remove the bitfield).\n";
-    for (auto &pNode : v1) {
-        if (pNode.pinName == "") continue;
-        //strip out the [ ] 
-        auto l = pNode.pinName.find('[');
-        if (l != std::string::npos) {
-            int pinbit = std::stoi(pNode.pinName.substr(l + 1, pNode.pinName.find(']') - 1));
-            //std::cout << "pinbit " << pinbit << std::endl;
-            pNode.pinNameBit = pinbit;
-            pNode.pinNameBase = pNode.pinName;
-            pNode.pinNameBase.erase(l);
-            //make a map of the verilog to find by name and get the bits
-            pinBitNumsMap[pNode.pinNameBase]++;  //increment seen pin bit count
+void printParsedVerilogCheck(std::vector<Veriloglayout> &vlognodes)
+{
+    //visually prints Verilog data we just read into the vector - to check validity, as a Unit Test
+    if (TEST_PRINT_VERILOG_CHECK) {
+        std::cout << "Printing parsed Verilog:\n";
+        for (auto node : vlognodes) {
+            if (node.pinName.length() != 0) {
+                std::cout << node.inpout << ": " << node.pinName;
+                if (node.bits > 1)
+                    std::cout << "  bits: [" << node.bits << "]";
+                std::cout << "  " << node.comment << std::endl;
+            }
         }
+        std::cout << "\n";
     }
-    //check output: pinBitNum will be (PINNAME, TOTALBITSACCOUNTEDFOR)
+}
+
+bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> &v2){
+    std::map<std::string, int> pinBitNumsMap;
+    //Count up the number of PCF pins with the same name;
+    for (auto &pNode : v1) {        
+        //make a map of the PCF to find by BaseName and count up the bits
+        pinBitNumsMap[pNode.pinNameBase]++;  //increment seen pin bit count
+    }
+    //check output:
     if (TEST_PCFMAP_PIN_COUNT) {
+        std::cout << "\nCount up the number of PCF pins with the same name:\n";
         for (auto pin : pinBitNumsMap) {
+            //map will be: PIN_NAME , TOTAL_BITS_ACCOUNTED_FOR
             std::cout << pin.first << " " << pin.second << "\n";
         }
+        std::cout << "\n";
     }
-    std::cout << "\nComparing parsed_PCF with parsed_Verilog:\n";
+    std::cout << "Comparing parsed_Verilog with parsed_PCF:\n";
     bool hasMismatches{ false }; int mismatches_found = 0;
     //O(n^2)? = meh
     for (auto pin : pinBitNumsMap) {
         for (auto vNode : v2) {
-            if (vNode.pinName == "") continue;
             if (pin.first.find(vNode.pinName) == 0) {
                 if (pin.second != vNode.bits) {
-                    std::cout << "Verilog bit-count: " << vNode.pinName << " " << vNode.bits << "\n";
-                    std::cout << " NOT EQUAL to: \n";
-                    std::cout << "PCFfile bit-count: " << pin.first << " " << pin.second << "\n";
-                    hasMismatches = true;  mismatches_found++;
+                    std::cout << "Verilog @ " << vNode.pinName << " [" << vNode.bits << "]\n";
+                    std::cout << "   NOT EQUAL: \n";
+                    std::cout << "PCFfile @ " << pin.first << " [" << pin.second << "]\n";
+                    hasMismatches = true;  ++mismatches_found;
                     break;
                 }
             }
@@ -119,9 +130,7 @@ bool comparePCFtoVerilog(std::vector<PCFlayout> &v1, std::vector<Veriloglayout> 
     std::cout << "Finds errors where pin bit name is less than or greater than than the Verilog.v bit-field\n";
     //Finds Bit-Range errors between .PCF and .V
     for (auto pNode : v1) {
-        if (pNode.pinName == "") continue;
         for (auto vNode : v2) {
-            if (vNode.pinName == "") continue;
             if (pNode.pinName.find(vNode.pinName) == 0) {
                 if (pNode.pinNameBit < vNode.lobit) {
                     std::cout << "Error: " << pNode.pinName << " @ .PCF = " << pNode.pinNameBit << " < " << vNode.lobit << " @ .V \n";

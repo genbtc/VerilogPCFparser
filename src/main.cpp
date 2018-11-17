@@ -25,8 +25,6 @@
 #include <map>
 #include "main.h"
 
-#define TEST_PRINT_PCFREAD_CHECK 1
-#define TEST_PRINT_VERILOG_CHECK 1
 
 //default filenames
 const char* verilogfile = "testdata/verilogtest.v";
@@ -65,46 +63,14 @@ int main(int argc, char** argv) {
     std::cout << "Reading Input Verilog File: " << verilogfile << "\n";
     std::vector<Veriloglayout> vlognodes = parseVerilog(verilogfile);
     //Check if we read anything, if not, error out.
-    if (vlognodes.size() < 1) { std::cerr << "Failed to parse anything in the Verilog file. Exiting!\n"; return -1; }
+    if (vlognodes.size() < 1) { std::cerr << "Failed to parse anything in the Verilog file. Exiting!\n"; return -2; }
     //outputs parsed verilog
     printParsedVerilogCheck(vlognodes);
 
 //Step 4:
     //Compare Verilog and PCF files together and checks:
-    std::map<std::string, int> pinBitNumsMap;
-    auto result2 = comparePCFtoVerilog(pcfnodes, vlognodes, pinBitNumsMap);
+    auto result2 = comparePCFtoVerilog(pcfnodes, vlognodes);
     std::cout << (result2 ? "Errors!" : "All OK!") << "\n\n";
 
     return (result1 || result2);
 }
-
-void printParsedVerilogCheck(std::vector<Veriloglayout> &vlognodes)
-{
-    //visually prints Verilog data we just read into the vector - to check validity, as a Unit Test
-    if (TEST_PRINT_VERILOG_CHECK) {
-        std::cout << "Printing parsed Verilog:\n";
-        for (auto node : vlognodes) {
-            if (node.pinName.length() != 0) {
-                std::cout << node.inpout << ": " << node.pinName;
-                if (node.bits > 1)
-                    std::cout << "  bit-count: " << node.bits;
-                std::cout << "  " << node.comment << std::endl;
-            }
-        }
-        std::cout << "\n";
-    }
-}
-
-void printParsedPCFcheck(std::vector<PCFlayout> &pcfnodes)
-{
-    //visually prints PCF input data we just read into the vector - to check validity, as a Unit Test
-    if (TEST_PRINT_PCFREAD_CHECK) {
-        std::cout << "Printing Parsed PCF:\n";
-        for (auto node : pcfnodes) {
-            if (node.pinName.length() != 0)
-                std::cout << "set_io" << " " << node.pinName << " " << node.pinNum << " " << node.comment << std::endl;
-        }
-        std::cout << "\n";
-    }
-}
-
