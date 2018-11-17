@@ -148,18 +148,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src/cmdline.cpp" />
+    <ClCompile Include="src/main.cpp" />
+    <ClCompile Include="src/pcf.cpp" />
+    <ClCompile Include="src/verilog.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="verilogtest.v" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="blackice-ii.pcf" />
-    <None Include="blackice-iii.pcf" />
-    <None Include="verilogALL.v" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="main.h" />
+    <ClInclude Include="src/main.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
